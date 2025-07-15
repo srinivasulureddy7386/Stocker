@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Manage - Stocker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="dashboard-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📈</span>
+                <span class="logo-text">Stocker Admin</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ url_for('admin_portfolio') }}" class="nav-item">Portfolios</a>
+                <a href="{{ url_for('admin_history') }}" class="nav-item">History</a>
+                <a href="{{ url_for('admin_manage') }}" class="nav-item active">Manage</a>
+            </div>
+            <div class="nav-user">
+                <span class="username">{{ session.username }} (Admin)</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <div class="admin-container">
+            <section class="admin-header">
+                <h1 class="page-title">🧑‍🔧 Manage Traders</h1>
+                <p class="page-subtitle">Overview of all registered traders</p>
+            </section>
+
+            {% if traders %}
+            <section class="admin-table-section">
+                <div class="table-controls">
+                    <div class="search-box">
+                        <input type="text" id="searchTraders" placeholder="Search by username or email..." class="search-input">
+                    </div>
+                    <div class="table-info">
+                        <span class="info-text">Total Traders: {{ traders|length }}</span>
+                    </div>
+                </div>
+
+                <div class="admin-table">
+                    <table id="tradersTable">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Signup Date</th>
+                                <th>Portfolio Value</th>
+                                <th>Stocks Owned</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trader in traders %}
+                            <tr data-username="{{ trader.username if trader.username else trader[0] }}"
+                                data-email="{{ trader.email if trader.email else trader[1] }}">
+                                <td class="username">{{ trader.username if trader.username else trader[0] }}</td>
+                                <td class="email">{{ trader.email if trader.email else trader[1] }}</td>
+                                <td class="signup-date">{{ trader.created_at[:10] if trader.created_at else trader[2][:10] if trader[2] else 'N/A' }}</td>
+                                <td class="portfolio-value">${{ "%.2f"|format(trader.portfolio_value if trader.portfolio_value else trader[3] if trader[3] else 0) }}</td>
+                                <td class="stocks-owned">{{ trader.stocks_owned if trader.stocks_owned else trader[4] if trader[4] else 0 }}</td>
+                                <td class="status">
+                                    <span class="status-badge status-active">Active</span>
+                                </td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-primary" onclick="viewTraderDetails('{{ trader.username if trader.username else trader[0] }}')">View</button>
+                                    <button class="btn btn-sm btn-warning" onclick="contactTrader('{{ trader.email if trader.email else trader[1] }}')">Contact</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% else %}
+            <section class="empty-state-section">
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <h3>No Traders Found</h3>
+                    <p>No traders have registered yet</p>
+                </div>
+            </section>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Trader Details Modal -->
+    <div id="traderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Trader Details</h3>
+                <span class="modal-close" onclick="closeTraderModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="traderDetails">
+                <!-- Trader details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTraderModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Initialize admin manage page
+        initializeAdminManage();
+    </script>
+</body>
+</html>

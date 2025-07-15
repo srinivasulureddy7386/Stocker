@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading History - Stocker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="dashboard-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📈</span>
+                <span class="logo-text">Stocker</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ url_for('trade') }}" class="nav-item">Trade</a>
+                <a href="{{ url_for('portfolio') }}" class="nav-item">Portfolio</a>
+                <a href="{{ url_for('history') }}" class="nav-item active">History</a>
+                <a href="{{ url_for('help') }}" class="nav-item">Help</a>
+            </div>
+            <div class="nav-user">
+                <span class="username">{{ session.username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <div class="history-container">
+            <section class="history-header">
+                <h1 class="page-title">📜 Trading History</h1>
+                <div class="history-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ trades|length }}</div>
+                        <div class="stat-label">Total Trades</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ trades|selectattr('4', 'equalto', 'BUY')|list|length }}</div>
+                        <div class="stat-label">Buy Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ trades|selectattr('4', 'equalto', 'SELL')|list|length }}</div>
+                        <div class="stat-label">Sell Orders</div>
+                    </div>
+                </div>
+            </section>
+
+            {% if trades %}
+            <section class="history-table-section">
+                <div class="table-filters">
+                    <select id="typeFilter" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="BUY">Buy Orders</option>
+                        <option value="SELL">Sell Orders</option>
+                    </select>
+                    <select id="stockFilter" class="form-select">
+                        <option value="">All Stocks</option>
+                        {% for trade in trades %}
+                        <option value="{{ trade[0] }}">{{ trade[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="history-table">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Stock Symbol</th>
+                                <th>Quantity</th>
+                                <th>Price per Share</th>
+                                <th>Total Amount</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in trades %}
+                            <tr data-type="{{ trade[3] }}" data-stock="{{ trade[0] }}">
+                                <td class="timestamp">{{ trade[4][:19] if trade[4] else 'N/A' }}</td>
+                                <td class="stock-symbol">{{ trade[0] }}</td>
+                                <td class="quantity">{{ trade[1] }}</td>
+                                <td class="price">${{ "%.2f"|format(trade[2]) }}</td>
+                                <td class="total">${{ "%.2f"|format(trade[1] * trade[2]) }}</td>
+                                <td class="trade-type">
+                                    <span class="type-badge type-{{ trade[3].lower() }}">{{ trade[3] }}</span>
+                                </td>
+                                <td class="status">
+                                    <span class="status-badge status-completed">Completed</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% else %}
+            <section class="empty-history">
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h3>No Trading History</h3>
+                    <p>Your trading history will appear here after you make your first trade</p>
+                    <a href="{{ url_for('trade') }}" class="btn btn-primary btn-large">Start Trading</a>
+                </div>
+            </section>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Initialize history filters
+        initializeHistoryFilters();
+    </script>
+</body>
+</html>

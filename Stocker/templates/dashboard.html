@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Stocker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="dashboard-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📈</span>
+                <span class="logo-text">Stocker</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item active">Dashboard</a>
+                <a href="{{ url_for('trade') }}" class="nav-item">Trade</a>
+                <a href="{{ url_for('portfolio') }}" class="nav-item">Portfolio</a>
+                <a href="{{ url_for('history') }}" class="nav-item">History</a>
+                <a href="{{ url_for('help') }}" class="nav-item">Help</a>
+            </div>
+            <div class="nav-user">
+                <span class="username">{{ session.username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="dashboard-grid">
+            <section class="dashboard-section">
+                <h2 class="section-title">📊 Available Stocks</h2>
+                <div class="stocks-grid" id="stocksGrid">
+                    {% for symbol, price in stocks.items() %}
+                    <div class="stock-card">
+                        <div class="stock-symbol">{{ symbol }}</div>
+                        <div class="stock-price" id="price-{{ symbol }}">${{ "%.2f"|format(price) }}</div>
+                        <div class="stock-change" id="change-{{ symbol }}">+0.00%</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="dashboard-section">
+                <h2 class="section-title">💼 My Portfolio</h2>
+                {% if portfolio %}
+                <div class="portfolio-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Stock</th>
+                                <th>Quantity</th>
+                                <th>Avg Price</th>
+                                <th>Current Price</th>
+                                <th>Total Value</th>
+                                <th>P&L</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in portfolio %}
+                            <tr>
+                                <td class="stock-symbol">{{ stock[0] }}</td>
+                                <td>{{ stock[1] }}</td>
+                                <td>${{ "%.2f"|format(stock[2]) }}</td>
+                                <td id="current-{{ stock[0] }}">${{ "%.2f"|format(stocks[stock[0]]) }}</td>
+                                <td id="total-{{ stock[0] }}">${{ "%.2f"|format(stock[1] * stocks[stock[0]]) }}</td>
+                                <td class="pnl {% if stocks[stock[0]] > stock[2] %}profit{% else %}loss{% endif %}" id="pnl-{{ stock[0] }}">
+                                    ${{ "%.2f"|format((stocks[stock[0]] - stock[2]) * stock[1]) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📈</div>
+                    <h3>No Stocks in Portfolio</h3>
+                    <p>Start trading to build your portfolio</p>
+                    <a href="{{ url_for('trade') }}" class="btn btn-primary">Start Trading</a>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="dashboard-section">
+                <h2 class="section-title">⚡ Quick Trade</h2>
+                <form class="quick-trade-form" action="{{ url_for('trade') }}" method="POST">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="stock_symbol">Stock</label>
+                            <select name="stock_symbol" id="stock_symbol" required class="form-select">
+                                <option value="">Select stock</option>
+                                {% for symbol in stocks.keys() %}
+                                <option value="{{ symbol }}">{{ symbol }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" name="quantity" id="quantity" min="1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <button type="submit" name="trade_type" value="BUY" class="btn btn-success">Buy</button>
+                        <button type="submit" name="trade_type" value="SELL" class="btn btn-danger">Sell</button>
+                    </div>
+                    <div class="price-preview" id="pricePreview"></div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Start stock price updates
+        updateStockPrices();
+        setInterval(updateStockPrices, 10000);
+    </script>
+</body>
+</html>

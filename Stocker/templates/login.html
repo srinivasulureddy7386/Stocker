@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Stocker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo">
+                    <span class="logo-icon">📈</span>
+                    <span class="logo-text">Stocker</span>
+                </div>
+                <h2>Welcome Back</h2>
+                <p>Sign in to your trading account</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-input-container">
+                        <input type="password" id="password" name="password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('password')">👁️</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role" name="role" required class="form-select">
+                        <option value="">Select your role</option>
+                        <option value="Trader">Trader</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="{{ url_for('signup') }}">Create one here</a></p>
+                <p><a href="{{ url_for('index') }}">← Back to Home</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

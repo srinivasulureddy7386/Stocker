@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio - Stocker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="dashboard-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📈</span>
+                <span class="logo-text">Stocker</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ url_for('trade') }}" class="nav-item">Trade</a>
+                <a href="{{ url_for('portfolio') }}" class="nav-item active">Portfolio</a>
+                <a href="{{ url_for('history') }}" class="nav-item">History</a>
+                <a href="{{ url_for('help') }}" class="nav-item">Help</a>
+            </div>
+            <div class="nav-user">
+                <span class="username">{{ session.username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <div class="portfolio-container">
+            <section class="portfolio-header">
+                <h1 class="page-title">💼 My Portfolio</h1>
+                <div class="portfolio-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalValue">$0.00</div>
+                        <div class="stat-label">Total Value</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalPnL">$0.00</div>
+                        <div class="stat-label">Total P&L</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ portfolio|length }}</div>
+                        <div class="stat-label">Holdings</div>
+                    </div>
+                </div>
+            </section>
+
+            {% if portfolio %}
+            <section class="portfolio-table-section">
+                <div class="portfolio-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Stock Symbol</th>
+                                <th>Quantity</th>
+                                <th>Avg. Purchase Price</th>
+                                <th>Current Price</th>
+                                <th>Total Value</th>
+                                <th>P&L Amount</th>
+                                <th>P&L %</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in portfolio %}
+                            {% set current_price = current_prices.get(stock[0], stock[2]) %}
+                            {% set total_value = stock[1] * current_price %}
+                            {% set pnl_amount = (current_price - stock[2]) * stock[1] %}
+                            {% set pnl_percent = ((current_price - stock[2]) / stock[2]) * 100 %}
+                            <tr>
+                                <td class="stock-symbol">{{ stock[0] }}</td>
+                                <td class="quantity">{{ stock[1] }}</td>
+                                <td class="avg-price">${{ "%.2f"|format(stock[2]) }}</td>
+                                <td class="current-price" data-symbol="{{ stock[0] }}">${{ "%.2f"|format(current_price) }}</td>
+                                <td class="total-value" data-symbol="{{ stock[0] }}">${{ "%.2f"|format(total_value) }}</td>
+                                <td class="pnl-amount {% if pnl_amount >= 0 %}profit{% else %}loss{% endif %}" data-symbol="{{ stock[0] }}">
+                                    {% if pnl_amount >= 0 %}+{% endif %}${{ "%.2f"|format(pnl_amount) }}
+                                </td>
+                                <td class="pnl-percent {% if pnl_percent >= 0 %}profit{% else %}loss{% endif %}" data-symbol="{{ stock[0] }}">
+                                    {% if pnl_percent >= 0 %}+{% endif %}{{ "%.2f"|format(pnl_percent) }}%
+                                </td>
+                                <td class="actions">
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('trade') }}?symbol={{ stock[0] }}&type=buy" class="btn btn-sm btn-success">Buy</a>
+                                        <a href="{{ url_for('trade') }}?symbol={{ stock[0] }}&type=sell" class="btn btn-sm btn-danger">Sell</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% else %}
+            <section class="empty-portfolio">
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <h3>Your Portfolio is Empty</h3>
+                    <p>Start building your investment portfolio by purchasing stocks</p>
+                    <a href="{{ url_for('trade') }}" class="btn btn-primary btn-large">Start Trading</a>
+                </div>
+            </section>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Initialize portfolio page
+        updatePortfolioValues();
+        setInterval(updatePortfolioValues, 10000);
+    </script>
+</body>
+</html>

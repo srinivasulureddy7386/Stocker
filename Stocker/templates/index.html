@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stocker - Next-Gen Stock Trading Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📈</span>
+                <span class="logo-text">Stocker</span>
+            </div>
+            <div class="nav-menu">
+                <button class="nav-item active" onclick="showContent('home')">Home</button>
+                <button class="nav-item" onclick="showContent('about')">About</button>
+                <button class="nav-item" onclick="showContent('services')">Services</button>
+            </div>
+            <div class="nav-auth">
+                <a href="{{ url_for('login') }}" class="btn btn-outline">Login</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-primary">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div id="home" class="content-section active">
+            <div class="hero-section">
+                <div class="hero-background">
+                    <div class="floating-elements">
+                        <div class="floating-icon">💰</div>
+                        <div class="floating-icon">📊</div>
+                        <div class="floating-icon">🚀</div>
+                        <div class="floating-icon">💎</div>
+                        <div class="floating-icon">⚡</div>
+                        <div class="floating-icon">🎯</div>
+                    </div>
+                </div>
+                
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <span class="badge-text">🔥 #1 Trading Platform 2025</span>
+                    </div>
+                    
+                    <h1 class="hero-title">
+                        Trade Smarter with
+                        <span class="gradient-text">Stocker</span>
+                    </h1>
+                    
+                    <p class="hero-subtitle">
+                        Experience the future of stock trading with AI-powered insights, 
+                        lightning-fast execution, and professional-grade tools designed for modern investors.
+                    </p>
+                    
+                    <div class="hero-features">
+                        <div class="feature-pill">
+                            <span class="pill-icon">⚡</span>
+                            <span>Instant Execution</span>
+                        </div>
+                        <div class="feature-pill">
+                            <span class="pill-icon">🔒</span>
+                            <span>Bank-Level Security</span>
+                        </div>
+                        <div class="feature-pill">
+                            <span class="pill-icon">📱</span>
+                            <span>Mobile Ready</span>
+                        </div>
+                    </div>
+                    
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">$2.5B+</div>
+                            <div class="stat-label">Trading Volume</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">500K+</div>
+                            <div class="stat-label">Active Traders</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">99.9%</div>
+                            <div class="stat-label">Uptime</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">Support</div>
+                        </div>
+                    </div>
+                    
+                    <div class="cta-buttons">
+                        <a href="{{ url_for('signup') }}" class="btn btn-primary btn-large">
+                            <span class="btn-icon">🚀</span>
+                            Start Trading Now
+                        </a>
+                        <button class="btn btn-secondary btn-large" onclick="showContent('about')">
+                            <span class="btn-icon">📖</span>
+                            Learn More
+                        </button>
+                    </div>
+                    
+                    <div class="trust-indicators">
+                        <div class="trust-item">
+                            <span class="trust-icon">🛡️</span>
+                            <span>SEC Regulated</span>
+                        </div>
+                        <div class="trust-item">
+                            <span class="trust-icon">🏆</span>
+                            <span>Award Winning</span>
+                        </div>
+                        <div class="trust-item">
+                            <span class="trust-icon">💳</span>
+                            <span>FDIC Insured</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="about" class="content-section">
+            <div class="about-section">
+                <div class="section-header">
+                    <h2 class="section-title">Why Choose Stocker Pro?</h2>
+                    <p class="section-subtitle">
+                        Built by traders, for traders. Our platform combines cutting-edge technology 
+                        with intuitive design to deliver the ultimate trading experience.
+                    </p>
+                </div>
+                
+                <div class="about-grid">
+                    <div class="about-card premium">
+                        <div class="card-header">
+                            <div class="card-icon">🚀</div>
+                            <h3>Lightning Speed</h3>
+                        </div>
+                        <p>Execute trades in under 50ms with our advanced matching engine. Never miss a market opportunity again.</p>
+                        <div class="card-stats">
+                            <span class="stat">50ms execution</span>
+                            <span class="stat">99.99% uptime</span>
+                        </div>
+                    </div>
+                    
+                    <div class="about-card premium">
+                        <div class="card-header">
+                            <div class="card-icon">🧠</div>
+                            <h3>AI-Powered Insights</h3>
+                        </div>
+                        <p>Get real-time market analysis and personalized trading recommendations powered by machine learning.</p>
+                        <div class="card-stats">
+                            <span class="stat">Real-time AI</span>
+                            <span class="stat">Smart alerts</span>
+                        </div>
+                    </div>
+                    
+                    <div class="about-card premium">
+                        <div class="card-header">
+                            <div class="card-icon">🔒</div>
+                            <h3>Fort Knox Security</h3>
+                        </div>
+                        <p>Your investments are protected with military-grade encryption, 2FA, and cold storage protocols.</p>
+                        <div class="card-stats">
+                            <span class="stat">256-bit encryption</span>
+                            <span class="stat">Multi-factor auth</span>
+                        </div>
+                    </div>
+                    
+                    <div class="about-card premium">
+                        <div class="card-header">
+                            <div class="card-icon">📊</div>
+                            <h3>Pro Analytics</h3>
+                        </div>
+                        <p>Advanced charting tools, technical indicators, and portfolio analytics to maximize your returns.</p>
+                        <div class="card-stats">
+                            <span class="stat">50+ indicators</span>
+                            <span class="stat">Custom charts</span>
+                        </div>
+                    </div>
+                    
+                    <div class="about-card premium">
+                        <div class="card-header">
+                            <div class="card-icon">🌍</div>
+                            <h3>Global Markets</h3>
+                        </div>
+                        <p>Trade stocks, ETFs, and options across multiple exchanges worldwide with competitive pricing.</p>
+                        <div class="card-stats">
+                            <span class="stat">15+ exchanges</span>
+                            <span class="stat">5000+ assets</span>
+                        </div>
+                    </div>
+                    
+                    <div class="about-card premium">
+                        <div class="card-header">
+                            <div class="card-icon">🎓</div>
+                            <h3>Trading Academy</h3>
+                        </div>
+                        <p>Learn from market experts with our comprehensive educational resources and live webinars.</p>
+                        <div class="card-stats">
+                            <span class="stat">100+ courses</span>
+                            <span class="stat">Live sessions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="services" class="content-section">
+            <div class="services-section">
+                <div class="section-header">
+                    <h2 class="section-title">Premium Trading Services</h2>
+                    <p class="section-subtitle">
+                        Everything you need to succeed in today's markets, from beginner-friendly tools 
+                        to institutional-grade features.
+                    </p>
+                </div>
+                
+                <div class="services-grid">
+                    <div class="service-card featured">
+                        <div class="service-badge">Most Popular</div>
+                        <div class="service-header">
+                            <div class="service-icon">📈</div>
+                            <h3>Real-Time Trading</h3>
+                            <div class="service-price">Free</div>
+                        </div>
+                        <p>Execute trades instantly with live market data and zero-commission stock trading.</p>
+                        <ul class="service-features">
+                            <li><span class="check">✓</span> Real-time market data</li>
+                            <li><span class="check">✓</span> Zero commission trades</li>
+                            <li><span class="check">✓</span> Advanced order types</li>
+                            <li><span class="check">✓</span> Mobile & desktop apps</li>
+                        </ul>
+                        <div class="service-cta">
+                            <a href="{{ url_for('signup') }}" class="btn btn-primary btn-full">Get Started</a>
+                        </div>
+                    </div>
+                    
+                    <div class="service-card">
+                        <div class="service-header">
+                            <div class="service-icon">💼</div>
+                            <h3>Portfolio Management</h3>
+                            <div class="service-price">Pro</div>
+                        </div>
+                        <p>Professional portfolio tracking with advanced analytics and risk management tools.</p>
+                        <ul class="service-features">
+                            <li><span class="check">✓</span> Real-time P&L tracking</li>
+                            <li><span class="check">✓</span> Risk analysis tools</li>
+                            <li><span class="check">✓</span> Performance benchmarking</li>
+                            <li><span class="check">✓</span> Tax optimization</li>
+                        </ul>
+                        <div class="service-cta">
+                            <a href="{{ url_for('signup') }}" class="btn btn-outline btn-full">Learn More</a>
+                        </div>
+                    </div>
+                    
+                    <div class="service-card">
+                        <div class="service-header">
+                            <div class="service-icon">🤖</div>
+                            <h3>AI Trading Assistant</h3>
+                            <div class="service-price">Premium</div>
+                        </div>
+                        <p>Get personalized trading recommendations and market insights powered by AI.</p>
+                        <ul class="service-features">
+                            <li><span class="check">✓</span> Smart trade suggestions</li>
+                            <li><span class="check">✓</span> Market sentiment analysis</li>
+                            <li><span class="check">✓</span> Automated alerts</li>
+                            <li><span class="check">✓</span> Custom strategies</li>
+                        </ul>
+                        <div class="service-cta">
+                            <a href="{{ url_for('signup') }}" class="btn btn-outline btn-full">Coming Soon</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-main">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="logo-icon">📈</span>
+                        <span class="logo-text">Stocker</span>
+                    </div>
+                    <p>The future of stock trading is here. Join millions of traders worldwide.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h4>Platform</h4>
+                        <a href="#trading">Trading</a>
+                        <a href="#portfolio">Portfolio</a>
+                        <a href="#analytics">Analytics</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Support</h4>
+                        <a href="#help">Help Center</a>
+                        <a href="#contact">Contact</a>
+                        <a href="#api">API Docs</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Legal</h4>
+                        <a href="#privacy">Privacy</a>
+                        <a href="#terms">Terms</a>
+                        <a href="#security">Security</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Stocker Pro. All rights reserved. | Built with ❤️ for traders</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

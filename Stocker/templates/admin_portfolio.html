@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portfolios - Stocker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="dashboard-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📈</span>
+                <span class="logo-text">Stocker Admin</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ url_for('admin_portfolio') }}" class="nav-item active">Portfolios</a>
+                <a href="{{ url_for('admin_history') }}" class="nav-item">History</a>
+                <a href="{{ url_for('admin_manage') }}" class="nav-item">Manage</a>
+            </div>
+            <div class="nav-user">
+                <span class="username">{{ session.username }} (Admin)</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <div class="admin-container">
+            <section class="admin-header">
+                <h1 class="page-title">💼 All Trader Portfolios</h1>
+                <p class="page-subtitle">Monitor all active trader portfolios</p>
+            </section>
+
+            {% if portfolios %}
+            <section class="admin-table-section">
+                <div class="table-controls">
+                    <div class="search-box">
+                        <input type="text" id="searchPortfolio" placeholder="Search by username or stock..." class="search-input">
+                    </div>
+                    <div class="table-filters">
+                        <select id="stockFilter" class="form-select">
+                            <option value="">All Stocks</option>
+                            {% for portfolio in portfolios %}
+                            <option value="{{ portfolio.stock_symbol if portfolio.stock_symbol else portfolio[1] }}">
+                                {{ portfolio.stock_symbol if portfolio.stock_symbol else portfolio[1] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-table">
+                    <table id="portfolioTable">
+                        <thead>
+                            <tr>
+                                <th>Trader Username</th>
+                                <th>Stock Symbol</th>
+                                <th>Quantity</th>
+                                <th>Average Price</th>
+                                <th>Current Value</th>
+                                <th>P&L</th>
+                                <th>Date Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for portfolio in portfolios %}
+                            <tr>
+                                <td class="username">{{ portfolio.user_id if portfolio.user_id else portfolio[0] }}</td>
+                                <td class="stock-symbol">{{ portfolio.stock_symbol if portfolio.stock_symbol else portfolio[1] }}</td>
+                                <td class="quantity">{{ portfolio.quantity if portfolio.quantity else portfolio[2] }}</td>
+                                <td class="avg-price">${{ "%.2f"|format(portfolio.avg_price if portfolio.avg_price else portfolio[3]) }}</td>
+                                <td class="current-value">$0.00</td>
+                                <td class="pnl">$0.00</td>
+                                <td class="date">{{ portfolio.timestamp[:10] if portfolio.timestamp else 'N/A' }}</td>
+                                <td class="actions">
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-success" onclick="adminTrade('{{ portfolio.user_id if portfolio.user_id else portfolio[0] }}', '{{ portfolio.stock_symbol if portfolio.stock_symbol else portfolio[1] }}', 'BUY')">Buy</button>
+                                        <button class="btn btn-sm btn-danger" onclick="adminTrade('{{ portfolio.user_id if portfolio.user_id else portfolio[0] }}', '{{ portfolio.stock_symbol if portfolio.stock_symbol else portfolio[1] }}', 'SELL')">Sell</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% else %}
+            <section class="empty-state-section">
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <h3>No Portfolios Found</h3>
+                    <p>No traders have created portfolios yet</p>
+                </div>
+            </section>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Initialize admin portfolio page
+        initializeAdminPortfolio();
+    </script>
+</body>
+</html>

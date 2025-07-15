@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help & Support - Stocker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="dashboard-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📈</span>
+                <span class="logo-text">Stocker</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ url_for('trade') }}" class="nav-item">Trade</a>
+                <a href="{{ url_for('portfolio') }}" class="nav-item">Portfolio</a>
+                <a href="{{ url_for('history') }}" class="nav-item">History</a>
+                <a href="{{ url_for('help') }}" class="nav-item active">Help</a>
+            </div>
+            <div class="nav-user">
+                <span class="username">{{ session.username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="help-container">
+            <section class="help-header">
+                <h1 class="page-title">❓ Help & Support</h1>
+                <p class="page-subtitle">Get assistance with your trading questions</p>
+            </section>
+
+            <div class="help-grid">
+                <section class="help-section">
+                    <h2 class="section-title">📞 Contact Support</h2>
+                    <form method="POST" class="help-form" id="helpForm">
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <select name="subject" id="subject" required class="form-select">
+                                <option value="">Select a topic</option>
+                                <option value="Trading Issues">Trading Issues</option>
+                                <option value="Account Problems">Account Problems</option>
+                                <option value="Technical Support">Technical Support</option>
+                                <option value="Portfolio Questions">Portfolio Questions</option>
+                                <option value="General Inquiry">General Inquiry</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea name="message" id="message" required rows="5" 
+                                    placeholder="Describe your issue or question in detail..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full">Send Message</button>
+                    </form>
+                </section>
+
+                <section class="faq-section">
+                    <h2 class="section-title">❓ Frequently Asked Questions</h2>
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                <span>How do I buy stocks?</span>
+                                <span class="faq-icon">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Navigate to the Trade page, select a stock from the dropdown, enter the quantity you want to buy, select "Buy" as the trade type, and click "Execute Trade".</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                <span>How are stock prices updated?</span>
+                                <span class="faq-icon">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Stock prices are updated every 10 seconds with simulated market data to provide a realistic trading experience.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                <span>Can I sell partial quantities?</span>
+                                <span class="faq-icon">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Yes, you can sell any quantity up to the total number of shares you own in that stock.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                <span>How is my portfolio value calculated?</span>
+                                <span class="faq-icon">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Portfolio value is calculated using current market prices multiplied by your holdings. P&L shows the difference between your purchase price and current market value.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                <span>Where can I view my trading history?</span>
+                                <span class="faq-icon">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Visit the History page to see all your past trades, including buy and sell orders with timestamps and prices.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFaq(this)">
+                                <span>Is my trading data secure?</span>
+                                <span class="faq-icon">▼</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Yes, all trading data is securely stored and encrypted. We use industry-standard security practices to protect your information.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="contact-info">
+                    <h2 class="section-title">📧 Contact Information</h2>
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <strong>Email Support:</strong>
+                            <span>support@stocker.com</span>
+                        </div>
+                        <div class="contact-item">
+                            <strong>Response Time:</strong>
+                            <span>Within 24 hours</span>
+                        </div>
+                        <div class="contact-item">
+                            <strong>Support Hours:</strong>
+                            <span>24/7 Customer Support</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

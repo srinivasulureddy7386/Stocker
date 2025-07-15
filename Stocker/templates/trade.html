@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade - Stocker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="dashboard-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">📈</span>
+                <span class="logo-text">Stocker</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ url_for('trade') }}" class="nav-item active">Trade</a>
+                <a href="{{ url_for('portfolio') }}" class="nav-item">Portfolio</a>
+                <a href="{{ url_for('history') }}" class="nav-item">History</a>
+                <a href="{{ url_for('help') }}" class="nav-item">Help</a>
+            </div>
+            <div class="nav-user">
+                <span class="username">{{ session.username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="trade-container">
+            <div class="trade-grid">
+                <section class="trade-section">
+                    <h2 class="section-title">💰 Place Trade Order</h2>
+                    <form method="POST" class="trade-form" id="tradeForm">
+                        <div class="form-group">
+                            <label for="stock_symbol">Select Stock</label>
+                            <select name="stock_symbol" id="stock_symbol" required class="form-select">
+                                <option value="">Choose a stock to trade</option>
+                                {% for symbol, price in stocks.items() %}
+                                <option value="{{ symbol }}" data-price="{{ price }}">{{ symbol }} - ${{ "%.2f"|format(price) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" name="quantity" id="quantity" min="1" required placeholder="Enter number of shares">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Trade Type</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="trade_type" value="BUY" required>
+                                    <span class="radio-custom buy"></span>
+                                    Buy
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="trade_type" value="SELL" required>
+                                    <span class="radio-custom sell"></span>
+                                    Sell
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="trade-preview" id="tradePreview">
+                            <div class="preview-item">
+                                <span>Current Price:</span>
+                                <span id="currentPrice">--</span>
+                            </div>
+                            <div class="preview-item">
+                                <span id="totalLabel">Total Amount:</span>
+                                <span id="totalCost">--</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full">
+                            Execute Trade
+                        </button>
+                    </form>
+                </section>
+
+                <section class="market-section">
+                    <h2 class="section-title">📊 Live Market Data</h2>
+                    <div class="market-grid">
+                        {% for symbol, price in stocks.items() %}
+                        <div class="market-item" onclick="selectStock('{{ symbol }}')">
+                            <div class="market-symbol">{{ symbol }}</div>
+                            <div class="market-price" id="market-{{ symbol }}">${{ "%.2f"|format(price) }}</div>
+                            <div class="market-change" id="market-change-{{ symbol }}">+0.00%</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Initialize trade form
+        initializeTradeForm();
+        
+        // Start market data updates
+        updateMarketData();
+        setInterval(updateMarketData, 10000);
+    </script>
+</body>
+</html>
