@@ -411,4 +411,4 @@ if __name__ == '__main__':
     if not os.environ.get('WERKZEUG_RUN_MAIN'):
         browser_thread = threading.Thread(target=open_browser, daemon=True)
         browser_thread.start()
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
