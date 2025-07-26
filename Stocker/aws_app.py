@@ -9,7 +9,7 @@ import threading
 import time
 import random
 from boto3.dynamodb.conditions import Key
-
+from decimal import Decimal
 app = Flask(__name__)
 app.secret_key = 'stocker_secret_key_2024'
 
@@ -126,15 +126,15 @@ stock_prices = {}
 
 def generate_stock_prices():
     for symbol in STOCK_SYMBOLS:
-        base_price = random.uniform(50, 500)
-        stock_prices[symbol] = round(base_price, 2)
-        
+        base_price = Decimal(str(random.uniform(50, 500)))  # ✅ Convert to Decimal
+        stock_prices[symbol] = base_price
+
         # Update DynamoDB stocks table
         try:
             stocks_table.put_item(
                 Item={
                     'symbol': symbol,
-                    'current_price': stock_prices[symbol],
+                    'current_price': base_price,
                     'last_updated': datetime.now().isoformat()
                 }
             )
@@ -144,21 +144,24 @@ def generate_stock_prices():
 def update_stock_prices():
     while True:
         for symbol in STOCK_SYMBOLS:
-            change = random.uniform(-0.05, 0.05)  # ±5% change
-            stock_prices[symbol] = round(stock_prices[symbol] * (1 + change), 2)
-            
+            change = Decimal(str(random.uniform(-0.05, 0.05)))  # ✅ Decimal
+            new_price = stock_prices[symbol] * (1 + change)
+            new_price = new_price.quantize(Decimal('0.01'))  # ✅ Round to 2 decimals
+
+            stock_prices[symbol] = new_price
+
             # Update DynamoDB
             try:
                 stocks_table.put_item(
                     Item={
                         'symbol': symbol,
-                        'current_price': stock_prices[symbol],
+                        'current_price': new_price,
                         'last_updated': datetime.now().isoformat()
                     }
                 )
             except Exception as e:
                 print(f"Error updating stock price: {e}")
-        
+
         time.sleep(10)
 
 # Initialize stock prices
@@ -314,7 +317,7 @@ def trade():
             flash('Invalid stock symbol!', 'error')
             return redirect(url_for('trade'))
             
-        price = stock_prices[stock_symbol]
+        price = Decimal(str(stock_prices[stock_symbol]))
         
         try:
             # Record trade
@@ -341,8 +344,8 @@ def trade():
                     )
                     if 'Item' in response:
                         existing = response['Item']
-                        new_qty = existing['quantity'] + quantity
-                        new_avg = ((existing['quantity'] * existing['avg_price']) + (quantity * price)) / new_qty
+                        new_qty = Decimal(existing['quantity']) + Decimal(quantity)
+                        new_avg = ((Decimal(existing['quantity']) * Decimal(str(existing['avg_price']))) + (Decimal(quantity) * price)) / new_qty
                         portfolio_table.put_item(
                             Item={
                                 'user_id': session['user_email'],
@@ -357,8 +360,8 @@ def trade():
                             Item={
                                 'user_id': session['user_email'],
                                 'stock_symbol': stock_symbol,
-                                'quantity': quantity,
-                                'avg_price': price,
+                                'quantity': int(new_qty),
+                                'avg_price': new_avg,
                                 'timestamp': datetime.now().isoformat()
                             }
                         )
@@ -372,7 +375,7 @@ def trade():
                     )
                     if 'Item' in response:
                         existing = response['Item']
-                        new_qty = existing['quantity'] - quantity
+                        new_qty = Decimal(existing['quantity']) - Decimal(quantity)
                         if new_qty <= 0:
                             portfolio_table.delete_item(
                                 Key={'user_id': session['user_email'], 'stock_symbol': stock_symbol}
@@ -561,4 +564,3 @@ if __name__ == '__main__':
         browser_thread = threading.Thread(target=open_browser, daemon=True)
         browser_thread.start()
     app.run(debug=True, host='0.0.0.0', port=5000)
-    
