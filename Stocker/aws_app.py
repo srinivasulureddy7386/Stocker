@@ -19,7 +19,7 @@ USERS_TABLE = 'stocker_user'
 STOCKS_TABLE = 'stocker_stocks'
 TRANSACTIONS_TABLE = 'stocker_transactions'
 PORTFOLIO_TABLE = 'stocker_portfolio'
-SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:xxxx:stocker_alerts'
+SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:971422691207:StockerUserAccountTopic'
 
 # Initialize AWS services
 dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
