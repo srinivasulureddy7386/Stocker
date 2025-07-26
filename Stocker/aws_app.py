@@ -10,6 +10,7 @@ import time
 import random
 from boto3.dynamodb.conditions import Key
 from decimal import Decimal
+
 app = Flask(__name__)
 app.secret_key = 'stocker_secret_key_2024'
 
@@ -125,8 +126,9 @@ STOCK_SYMBOLS = [
 stock_prices = {}
 
 def generate_stock_prices():
+    """Generates initial stock prices and stores them in DynamoDB."""
     for symbol in STOCK_SYMBOLS:
-        base_price = Decimal(str(random.uniform(50, 500)))  # ✅ Convert to Decimal
+        base_price = Decimal(str(random.uniform(50, 500)))  # Convert to Decimal
         stock_prices[symbol] = base_price
 
         # Update DynamoDB stocks table
@@ -139,14 +141,20 @@ def generate_stock_prices():
                 }
             )
         except Exception as e:
-            print(f"Error updating stock price: {e}")
+            print(f"Error updating stock price in DynamoDB: {e}")
 
+# The update_stock_prices function is no longer called in a loop.
+# It's kept here for reference but will not be executed automatically.
 def update_stock_prices():
+    """
+    This function is intended for continuous stock price updates.
+    It is currently not being called to prevent automatic updates.
+    """
     while True:
         for symbol in STOCK_SYMBOLS:
-            change = Decimal(str(random.uniform(-0.05, 0.05)))  # ✅ Decimal
+            change = Decimal(str(random.uniform(-0.05, 0.05)))  # Decimal
             new_price = stock_prices[symbol] * (1 + change)
-            new_price = new_price.quantize(Decimal('0.01'))  # ✅ Round to 2 decimals
+            new_price = new_price.quantize(Decimal('0.01'))  # Round to 2 decimals
 
             stock_prices[symbol] = new_price
 
@@ -164,27 +172,30 @@ def update_stock_prices():
 
         time.sleep(10)
 
-# Initialize stock prices
+# Initialize stock prices once at startup
 generate_stock_prices()
 
-# Start price update thread
-price_thread = threading.Thread(target=update_stock_prices, daemon=True)
-price_thread.start()
+# The price update thread is commented out to prevent automatic updates.
+# price_thread = threading.Thread(target=update_stock_prices, daemon=True)
+# price_thread.start()
 
 def hash_password(password):
+    """Hashes the given password using SHA256."""
     return hashlib.sha256(password.encode()).hexdigest()
 
 def send_sns_message(subject, message, email=None):
+    """Sends an SNS message to the configured topic."""
     try:
         if email:
-            # Send to specific email
+            # Note: Directly sending to an email address via SNS topic requires
+            # the email to be subscribed to the topic and confirmed.
+            # For simplicity, this sends to the topic, assuming subscribers are set up.
             sns_client.publish(
                 TopicArn=SNS_TOPIC_ARN,
                 Message=message,
                 Subject=subject
             )
         else:
-            # Send to topic
             sns_client.publish(
                 TopicArn=SNS_TOPIC_ARN,
                 Message=message,
@@ -195,10 +206,12 @@ def send_sns_message(subject, message, email=None):
 
 @app.route('/')
 def index():
+    """Renders the home page."""
     return render_template('index.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    """Handles user registration."""
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
@@ -241,6 +254,7 @@ def signup():
 
 @app.route('/check_username')
 def check_username():
+    """Checks if a username already exists (for AJAX validation)."""
     username = request.args.get('username')
     try:
         # Scan for username (since it's not the primary key)
@@ -254,6 +268,7 @@ def check_username():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Handles user login."""
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -284,11 +299,13 @@ def login():
 
 @app.route('/logout')
 def logout():
+    """Logs out the current user."""
     session.clear()
     return redirect(url_for('index'))
 
 @app.route('/dashboard')
 def dashboard():
+    """Renders the trader dashboard."""
     if 'user_email' not in session or session['role'] != 'Trader':
         return redirect(url_for('login'))
     
@@ -301,16 +318,23 @@ def dashboard():
         
         return render_template('dashboard.html', stocks=stock_prices, portfolio=portfolio)
     except Exception as e:
+        flash(f"Error loading dashboard: {str(e)}", 'error')
         return render_template('dashboard.html', stocks=stock_prices, portfolio=[])
 
 @app.route('/trade', methods=['GET', 'POST'])
 def trade():
+    """Handles stock buy/sell operations."""
     if 'user_email' not in session or session['role'] != 'Trader':
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        stock_symbol = request.form['stock_symbol']
-        quantity = int(request.form['quantity'])
+        stock_symbol = request.form['stock_symbol'].upper() # Ensure symbol is uppercase
+        try:
+            quantity = int(request.form['quantity'])
+        except ValueError:
+            flash('Quantity must be a whole number!', 'error')
+            return redirect(url_for('trade'))
+
         trade_type = request.form['trade_type']
         
         if stock_symbol not in stock_prices:
@@ -335,7 +359,7 @@ def trade():
             )
             
             # Update portfolio
-            portfolio_key = f"{session['user_email']}#{stock_symbol}"
+            # For DynamoDB, we use user_id and stock_symbol as a composite key for portfolio
             
             if trade_type == 'BUY':
                 try:
@@ -344,14 +368,20 @@ def trade():
                     )
                     if 'Item' in response:
                         existing = response['Item']
-                        new_qty = Decimal(existing['quantity']) + Decimal(quantity)
-                        new_avg = ((Decimal(existing['quantity']) * Decimal(str(existing['avg_price']))) + (Decimal(quantity) * price)) / new_qty
+                        # Convert existing quantity and avg_price to Decimal for calculations
+                        existing_qty = Decimal(str(existing['quantity']))
+                        existing_avg_price = Decimal(str(existing['avg_price']))
+
+                        new_qty = existing_qty + Decimal(quantity)
+                        # Calculate new average price
+                        new_avg = ((existing_qty * existing_avg_price) + (Decimal(quantity) * price)) / new_qty
+                        
                         portfolio_table.put_item(
                             Item={
                                 'user_id': session['user_email'],
                                 'stock_symbol': stock_symbol,
-                                'quantity': new_qty,
-                                'avg_price': new_avg,
+                                'quantity': new_qty.quantize(Decimal('0.01')), # Store as Decimal, rounded
+                                'avg_price': new_avg.quantize(Decimal('0.01')), # Store as Decimal, rounded
                                 'timestamp': datetime.now().isoformat()
                             }
                         )
@@ -360,13 +390,14 @@ def trade():
                             Item={
                                 'user_id': session['user_email'],
                                 'stock_symbol': stock_symbol,
-                                'quantity': int(new_qty),
-                                'avg_price': new_avg,
+                                'quantity': Decimal(quantity).quantize(Decimal('0.01')), # Store as Decimal
+                                'avg_price': price.quantize(Decimal('0.01')), # Store as Decimal
                                 'timestamp': datetime.now().isoformat()
                             }
                         )
                 except Exception as e:
-                    print(f"Portfolio update error: {e}")
+                    print(f"Portfolio BUY update error: {e}")
+                    flash(f'Error updating portfolio after buy: {str(e)}', 'error')
             
             elif trade_type == 'SELL':
                 try:
@@ -375,7 +406,13 @@ def trade():
                     )
                     if 'Item' in response:
                         existing = response['Item']
-                        new_qty = Decimal(existing['quantity']) - Decimal(quantity)
+                        existing_qty = Decimal(str(existing['quantity']))
+
+                        if quantity > existing_qty:
+                            flash('You cannot sell more shares than you own!', 'error')
+                            return redirect(url_for('trade'))
+
+                        new_qty = existing_qty - Decimal(quantity)
                         if new_qty <= 0:
                             portfolio_table.delete_item(
                                 Key={'user_id': session['user_email'], 'stock_symbol': stock_symbol}
@@ -385,24 +422,19 @@ def trade():
                                 Item={
                                     'user_id': session['user_email'],
                                     'stock_symbol': stock_symbol,
-                                    'quantity': new_qty,
-                                    'avg_price': existing['avg_price'],
+                                    'quantity': new_qty.quantize(Decimal('0.01')), # Store as Decimal
+                                    'avg_price': Decimal(str(existing['avg_price'])).quantize(Decimal('0.01')), # Maintain existing avg_price
                                     'timestamp': datetime.now().isoformat()
                                 }
                             )
                     else:
-                        # Create negative position (short selling)
-                        portfolio_table.put_item(
-                            Item={
-                                'user_id': session['user_email'],
-                                'stock_symbol': stock_symbol,
-                                'quantity': -quantity,
-                                'avg_price': price,
-                                'timestamp': datetime.now().isoformat()
-                            }
-                        )
+                        # If trying to sell a stock not in portfolio (could be short selling in a real system)
+                        # For this simulation, we'll prevent selling what you don't own.
+                        flash('You do not own this stock to sell!', 'error')
+                        return redirect(url_for('trade'))
                 except Exception as e:
-                    print(f"Portfolio update error: {e}")
+                    print(f"Portfolio SELL update error: {e}")
+                    flash(f'Error updating portfolio after sell: {str(e)}', 'error')
             
             # Send trade notification via SNS
             send_sns_message(
@@ -421,6 +453,7 @@ def trade():
 
 @app.route('/portfolio')
 def portfolio():
+    """Renders the user's portfolio."""
     if 'user_email' not in session or session['role'] != 'Trader':
         return redirect(url_for('login'))
     
@@ -428,13 +461,21 @@ def portfolio():
         response = portfolio_table.scan(
             FilterExpression=Key('user_id').eq(session['user_email'])
         )
-        portfolio = response['Items']
-        return render_template('portfolio.html', portfolio=portfolio, current_prices=stock_prices)
+        portfolio_items = response['Items']
+        
+        # Ensure Decimal types are handled correctly for display
+        for item in portfolio_items:
+            item['quantity'] = Decimal(str(item['quantity']))
+            item['avg_price'] = Decimal(str(item['avg_price']))
+
+        return render_template('portfolio.html', portfolio=portfolio_items, current_prices=stock_prices)
     except Exception as e:
+        flash(f"Error loading portfolio: {str(e)}", 'error')
         return render_template('portfolio.html', portfolio=[], current_prices=stock_prices)
 
 @app.route('/history')
 def history():
+    """Renders the user's trade history."""
     if 'user_email' not in session or session['role'] != 'Trader':
         return redirect(url_for('login'))
     
@@ -443,18 +484,23 @@ def history():
             FilterExpression=Key('user_id').eq(session['user_email'])
         )
         trades = sorted(response['Items'], key=lambda x: x['timestamp'], reverse=True)
+        # Ensure Decimal types are handled correctly for display
+        for trade in trades:
+            trade['price'] = Decimal(str(trade['price']))
         return render_template('history.html', trades=trades)
     except Exception as e:
+        flash(f"Error loading trade history: {str(e)}", 'error')
         return render_template('history.html', trades=[])
 
 @app.route('/help', methods=['GET', 'POST'])
 def help():
+    """Handles help requests."""
     if request.method == 'POST':
         # Send help request via SNS
         message = request.form.get('message', '')
         send_sns_message(
             'Help Request from Stocker',
-            f'User {session.get("username", "Unknown")} sent: {message}'
+            f'User {session.get("username", "Unknown")} ({session.get("user_email", "N/A")}) sent: {message}'
         )
         flash('Your message was sent!', 'success')
         return redirect(url_for('help'))
@@ -463,6 +509,7 @@ def help():
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
+    """Renders the admin dashboard."""
     if 'user_email' not in session or session['role'] != 'Admin':
         return redirect(url_for('login'))
     
@@ -475,43 +522,57 @@ def admin_dashboard():
         total_trades = len(trades_response['Items'])
         
         portfolio_response = portfolio_table.scan()
-        total_market_value = sum([p['quantity'] * p['avg_price'] for p in portfolio_response['Items']])
+        # Ensure Decimal conversion for calculation
+        total_market_value = sum([Decimal(str(p['quantity'])) * Decimal(str(p['avg_price'])) for p in portfolio_response['Items']])
         
         return render_template('admin_dashboard.html', 
-                             total_traders=total_traders,
-                             total_trades=total_trades,
-                             total_market_value=total_market_value)
+                               total_traders=total_traders,
+                               total_trades=total_trades,
+                               total_market_value=total_market_value.quantize(Decimal('0.01'))) # Round for display
     except Exception as e:
+        flash(f"Error loading admin dashboard: {str(e)}", 'error')
         return render_template('admin_dashboard.html', 
-                             total_traders=0,
-                             total_trades=0,
-                             total_market_value=0)
+                               total_traders=0,
+                               total_trades=0,
+                               total_market_value=0)
 
 @app.route('/admin_portfolio')
 def admin_portfolio():
+    """Renders the aggregated portfolio for admin."""
     if 'user_email' not in session or session['role'] != 'Admin':
         return redirect(url_for('login'))
     
     try:
         portfolios = portfolio_table.scan()['Items']
+        # Ensure Decimal types are handled correctly for display
+        for item in portfolios:
+            item['quantity'] = Decimal(str(item['quantity']))
+            item['avg_price'] = Decimal(str(item['avg_price']))
         return render_template('admin_portfolio.html', portfolios=portfolios)
     except Exception as e:
+        flash(f"Error loading admin portfolio: {str(e)}", 'error')
         return render_template('admin_portfolio.html', portfolios=[])
 
 @app.route('/admin_history')
 def admin_history():
+    """Renders the aggregated trade history for admin."""
     if 'user_email' not in session or session['role'] != 'Admin':
         return redirect(url_for('login'))
     
     try:
         trades = transactions_table.scan()['Items']
         trades = sorted(trades, key=lambda x: x['timestamp'], reverse=True)
+        # Ensure Decimal types are handled correctly for display
+        for trade in trades:
+            trade['price'] = Decimal(str(trade['price']))
         return render_template('admin_history.html', trades=trades)
     except Exception as e:
+        flash(f"Error loading admin history: {str(e)}", 'error')
         return render_template('admin_history.html', trades=[])
 
 @app.route('/admin_manage')
 def admin_manage():
+    """Renders user management for admin."""
     if 'user_email' not in session or session['role'] != 'Admin':
         return redirect(url_for('login'))
     
@@ -525,30 +586,35 @@ def admin_manage():
         for p in portfolio_response['Items']:
             user_id = p['user_id']
             if user_id not in portfolio_by_user:
-                portfolio_by_user[user_id] = {'value': 0, 'stocks': 0}
-            portfolio_by_user[user_id]['value'] += p['quantity'] * p['avg_price']
+                portfolio_by_user[user_id] = {'value': Decimal('0'), 'stocks': 0}
+            portfolio_by_user[user_id]['value'] += Decimal(str(p['quantity'])) * Decimal(str(p['avg_price']))
             portfolio_by_user[user_id]['stocks'] += 1
         
         # Combine data
         for trader in traders:
             email = trader['email']
             if email in portfolio_by_user:
-                trader['portfolio_value'] = portfolio_by_user[email]['value']
+                trader['portfolio_value'] = portfolio_by_user[email]['value'].quantize(Decimal('0.01'))
                 trader['stocks_owned'] = portfolio_by_user[email]['stocks']
             else:
-                trader['portfolio_value'] = 0
+                trader['portfolio_value'] = Decimal('0.00')
                 trader['stocks_owned'] = 0
         
         traders = sorted(traders, key=lambda x: x['created_at'], reverse=True)
         return render_template('admin_manage.html', traders=traders)
     except Exception as e:
+        flash(f"Error loading user management: {str(e)}", 'error')
         return render_template('admin_manage.html', traders=[])
 
 @app.route('/api/stock_prices')
 def api_stock_prices():
-    return jsonify(stock_prices)
+    """API endpoint to get current stock prices."""
+    # Convert Decimal values to string for JSON serialization
+    serializable_prices = {symbol: str(price) for symbol, price in stock_prices.items()}
+    return jsonify(serializable_prices)
 
 def open_browser():
+    """Opens the web browser to the application URL."""
     time.sleep(1.5)
     try:
         webbrowser.open('http://localhost:5000')
